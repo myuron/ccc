@@ -19,6 +19,9 @@ const (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatal("usage: ccc <members.csv>")
+	}
 	members_file := os.Args[1]
 	if err := run(members_file); err != nil {
 		log.Fatal(err)
