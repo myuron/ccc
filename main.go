@@ -19,9 +19,16 @@ const (
 )
 
 func main() {
-	csv_file, err := os.Open(os.Args[1])
-	if err != nil {
+	members_file := os.Args[1]
+	if err := run(members_file); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func run(members_file string) error {
+	csv_file, err := os.Open(members_file)
+	if err != nil {
+		return err
 	}
 	defer func() {
 		err := csv_file.Close()
@@ -33,7 +40,7 @@ func main() {
 	csv_data := csv.NewReader(csv_file)
 	csv_row_data, err := csv_data.ReadAll()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	var standard_count int
@@ -47,19 +54,23 @@ func main() {
 			continue
 		}
 		if len(v) != 2 {
-			log.Fatalf("Error: the data in the %v row is missing", i+1)
+			return fmt.Errorf("the data in the %v row is missing", i+1)
 		}
 		switch v[1] {
 		case StandardPlan:
 			standard_count++
-			table.Append([]string{v[0], "○", ""})
+			if err := table.Append([]string{v[0], "○", ""}); err != nil {
+				return err
+			}
 		case PremiumPlan:
 			premium_count++
-			table.Append([]string{v[0], "", "○"})
+			if err := table.Append([]string{v[0], "", "○"}); err != nil {
+				return err
+			}
 		case Disable:
 			continue
 		default:
-			log.Fatalf("Error: unknown plan %q on the %v row", v[1], i+1)
+			return fmt.Errorf("unknown plan %q on the %v row", v[1], i+1)
 		}
 	}
 
@@ -69,10 +80,12 @@ func main() {
 
 	table.Header(members[0])
 	if err := table.Render(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	fmt.Printf("standard cost: %.2fJPY\n", standard_cost)
 	fmt.Printf("premium cost: %.2fJPY\n", premium_cost)
 	fmt.Printf("total cost: %.2fJPY\n", total_cost)
+
+	return nil
 }
