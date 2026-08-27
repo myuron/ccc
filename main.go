@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -40,8 +41,7 @@ func run(members_file string) error {
 		}
 	}()
 
-	csv_data := csv.NewReader(csv_file)
-	csv_row_data, err := csv_data.ReadAll()
+	csv_row_data, err := ParseMembers(csv_file)
 	if err != nil {
 		return err
 	}
@@ -53,27 +53,21 @@ func run(members_file string) error {
 		{"Name", "Standard", "Premium"},
 	}
 	for i, v := range csv_row_data {
-		if i == 0 {
-			continue
-		}
-		if len(v) != 2 {
-			return fmt.Errorf("the data in the %v row is missing", i+1)
-		}
-		switch v[1] {
+		switch v.Plan {
 		case StandardPlan:
 			standard_count++
-			if err := table.Append([]string{v[0], "○", ""}); err != nil {
+			if err := table.Append([]string{v.Name, "○", ""}); err != nil {
 				return err
 			}
 		case PremiumPlan:
 			premium_count++
-			if err := table.Append([]string{v[0], "", "○"}); err != nil {
+			if err := table.Append([]string{v.Name, "", "○"}); err != nil {
 				return err
 			}
 		case Disable:
 			continue
 		default:
-			return fmt.Errorf("unknown plan %q on the %v row", v[1], i+1)
+			return fmt.Errorf("unknown plan %q on the %v row", v.Name, i+1)
 		}
 	}
 
@@ -91,4 +85,28 @@ func run(members_file string) error {
 	fmt.Printf("total cost: %.2fJPY\n", total_cost)
 
 	return nil
+}
+
+type Member struct {
+	Name string
+	Plan string
+}
+
+func ParseMembers(r io.Reader) ([]Member, error) {
+	rows, err := csv.NewReader(r).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	var members []Member
+	for i, v := range rows {
+		if i == 0 {
+			continue
+		}
+		if len(v) != 2 {
+			return nil, fmt.Errorf("the data in the %v row is missing", i+1)
+		}
+		members = append(members, Member{Name: v[0], Plan: v[1]})
+
+	}
+	return members, nil
 }
