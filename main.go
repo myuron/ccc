@@ -67,7 +67,7 @@ func run(members_file string) error {
 		case Disable:
 			continue
 		default:
-			return fmt.Errorf("unknown plan %q on the %v row", v.Name, i+1)
+			return fmt.Errorf("unknown plan %q on the %v row", v.Plan, i+1)
 		}
 	}
 
