@@ -52,7 +52,7 @@ func run(members_file string) error {
 	members := [][]string{
 		{"Name", "Standard", "Premium"},
 	}
-	for i, v := range csv_row_data {
+	for _, v := range csv_row_data {
 		switch v.Plan {
 		case StandardPlan:
 			standard_count++
@@ -67,7 +67,7 @@ func run(members_file string) error {
 		case Disable:
 			continue
 		default:
-			return fmt.Errorf("unknown plan %q on the %v row", v.Plan, i+1)
+			return fmt.Errorf("unknown plan %q on the %v row", v.Plan, v.Row)
 		}
 	}
 
@@ -90,6 +90,7 @@ func run(members_file string) error {
 type Member struct {
 	Name string
 	Plan string
+	Row  int
 }
 
 func ParseMembers(r io.Reader) ([]Member, error) {
@@ -105,7 +106,7 @@ func ParseMembers(r io.Reader) ([]Member, error) {
 		if len(v) != 2 {
 			return nil, fmt.Errorf("the data in the %v row is missing", i+1)
 		}
-		members = append(members, Member{Name: v[0], Plan: v[1]})
+		members = append(members, Member{Name: v[0], Plan: v[1], Row: i + 1})
 
 	}
 	return members, nil
